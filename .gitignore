@@ -1,0 +1,4 @@
+data/*.jsonl
+data/*.log
+data/dex_cache.json
+__pycache__/

@@ -1,0 +1,27 @@
+{
+ "bind": "0.0.0.0",
+ "events_path": "data/events.jsonl",
+ "our_zap_fee_pct": 0.0,
+ "port": 8484,
+ "public_url": "http://100.102.52.59:8484",
+ "site_name": "LP Pools",
+ "pools_cache_path": "data/dex_cache.json",
+ "build": "v40f",
+ "gecko_api": "https://api.geckoterminal.com/api/v2",
+ "gecko_networks": [
+  "eth",
+  "solana",
+  "base",
+  "bsc",
+  "arbitrum",
+  "polygon_pos",
+  "optimism",
+  "robinhood",
+  "near",
+  "unichain",
+  "hyperliquid",
+  "apechain"
+ ],
+ "gecko_pages": 5,
+ "orders_path": "data/orders.jsonl"
+}

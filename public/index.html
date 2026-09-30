@@ -1,0 +1,174 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LP Pools — live DEX data</title>
+<style>:root{--bg:#0b0e14;--card:#141a26;--line:#232c40;--txt:#e8edf6;--mut:#93a0b8;--acc:#5eead4}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,sans-serif}header{padding:18px 20px;border-bottom:1px solid var(--line)}header h1{margin:0;font-size:22px}header p{margin:4px 0 0;color:var(--mut)}main{padding:16px 20px;max-width:1400px;margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input,select{background:#0e1320;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px}button.act{background:var(--acc);border:0;color:#04211c;font-weight:700;border-radius:8px;padding:8px 12px;cursor:pointer}button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;cursor:pointer}button.ghost.on{border-color:var(--acc);color:var(--acc)}button.ghost:disabled{opacity:.35;cursor:default}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mut);white-space:nowrap}th.s{cursor:pointer}th.s:hover{color:var(--acc)}tr.frow td{background:#0e1320;border-bottom:1px solid var(--line);padding:6px 8px}tr.frow>td>input,tr.frow>td>select{width:100%;padding:6px 8px;font-size:13px;min-width:0}th small{display:block;font-weight:400}td.num{text-align:right;font-variant-numeric:tabular-nums}.mut{color:var(--mut)}.free{color:var(--acc);font-weight:700}.up{color:var(--acc)}.dn{color:#fb7185}.detail{background:#0e1320;border:1px solid var(--line);border-radius:10px;padding:12px;margin:6px 0}.detail h4{margin:8px 0 4px}.pill{display:inline-block;background:#0e1320;border:1px solid var(--line);border-radius:8px;padding:3px 9px;margin:2px;font-size:13px}.pg{min-width:38px}tr.xrow td{background:#101828}.ms{position:relative}.ms>button{max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}#ms-dex-o,#ms-chain-o{max-height:170px;overflow-y:auto;overscroll-behavior:contain}.msdrop{position:fixed;z-index:50;background:#0e1320;border:1px solid var(--line);border-radius:8px;padding:8px;width:min(300px,92vw);max-height:260px;overflow:auto;box-shadow:0 8px 30px #000a}.msdrop input[type=text]{width:100%;margin-bottom:6px}.msdrop label:has(input:checked){background:#12352c;border-radius:6px}.msdrop label{display:flex;gap:8px;align-items:center;font-size:13px;padding:6px 0;white-space:nowrap;touch-action:manipulation;user-select:none;-webkit-user-select:none}</style></head><body>
+<header><h1>LP Pools</h1><p id="tag">loading…</p></header>
+<main><div class="card"><div class="row">
+<button class=ghost id="csv">⇩ CSV</button>
+<button class=ghost id="reset">reset all</button>
+<span class="mut" id="count"></span></div>
+<div style="overflow-x:auto;margin-top:8px"><table><thead><tr>
+<th class=s data-k="symbol">Pool <small id="a-symbol"></small></th><th class=s data-k="dex">DEX <small id="a-dex"></small></th><th class=s data-k="src">Src <small id="a-src"></small></th><th class=s data-k="chain">Chain <small id="a-chain"></small></th><th class=s data-k="tvl" style="text-align:right">Liquidity <small id="a-tvl"></small></th><th class=s data-k="vol" style="text-align:right">Vol 24h <small id="a-vol"></small></th><th class=s data-k="turn" style="text-align:right">Turnover <small id="a-turn"></small></th><th class=s data-k="chg" style="text-align:right">Δ 24h <small id="a-chg"></small></th><th class=s data-k="txns" style="text-align:right">Txns <small id="a-txns"></small></th><th class=s data-k="created">Age <small id="a-created"></small></th><th>Action</th>
+</tr><tr class=frow>
+<td><input id="f-q" placeholder="search live…"></td>
+<td><div class=ms><button class=ghost id="ms-dex-b">all ▾</button><div class=msdrop id="ms-dex-d" hidden><input type=text id="ms-dex-q" placeholder="search…"><div class=row style="gap:4px;margin:4px 0"><button class=ghost data-mall>All</button><button class=ghost data-mnone>None</button></div><div class=mut id="ms-dex-o-n" style="margin:2px 0 4px"></div><div id="ms-dex-o"></div></div></div></td>
+<td><div class=ms><button class=ghost id="ms-src-b">all</button><div class=msdrop id="ms-src-d" hidden><input type=text id="ms-src-q" placeholder="search"><div class=row style="gap:4px;margin:4px 0"><button class=ghost data-mall>All</button><button class=ghost data-mnone>None</button></div><div class=mut id="ms-src-o-n" style="margin:2px 0 4px"></div><div id="ms-src-o"></div></div></div></td>
+<td><div class=ms><button class=ghost id="ms-chain-b">all ▾</button><div class=msdrop id="ms-chain-d" hidden><input type=text id="ms-chain-q" placeholder="search…"><div class=row style="gap:4px;margin:4px 0"><button class=ghost data-mall>All</button><button class=ghost data-mnone>None</button></div><div class=mut id="ms-chain-o-n" style="margin:2px 0 4px"></div><div id="ms-chain-o"></div></div></div></td>
+<td><input id="f-minLiq" type=number placeholder="min $" min=0><input id="f-maxLiq" type=number placeholder="max $" min=0 style="margin-top:4px"></td>
+<td><input id="f-minVol" type=number placeholder="min $" min=0><input id="f-maxVol" type=number placeholder="max $" min=0 style="margin-top:4px"></td>
+<td><input id="f-minTurn" type=number placeholder="min x" step=any min=0><input id="f-maxTurn" type=number placeholder="max x" step=any min=0 style="margin-top:4px"></td>
+<td><input id="f-minChg" type=number placeholder="min %" step=any><input id="f-maxChg" type=number placeholder="max %" step=any style="margin-top:4px"></td>
+<td><input id="f-minTx" type=number placeholder="min" min=0><input id="f-maxTx" type=number placeholder="max" min=0 style="margin-top:4px"></td>
+<td><input id="f-minAge" type=number placeholder="min d" min=0><input id="f-maxAge" type=number placeholder="max d" min=0 style="margin-top:4px"></td>
+<td></td>
+</tr></thead><tbody id="tb"></tbody></table></div>
+<div class="row" style="margin-top:10px"><button class=ghost id="first">|←</button><button class=ghost id="prev">←</button><span id="nums" class="row" style="gap:4px"></span><button class=ghost id="next">→</button><button class=ghost id="last">→|</button><input id="jump" type=number min=1 style="width:80px" placeholder="page"><select id="size"><option>10</option><option selected>25</option><option>50</option><option>100</option></select><span class=mut id="showing"></span></div>
+<p class=mut>Every search hits the DEX API live; empty search browses the cached top pools. Turnover = vol/liquidity per day — the LP earning signal. Source: GeckoTerminal (free, no key), refreshed by <span style="font-family:monospace">bin/collect.sh</span>. <span style="font-family:monospace" id="build">v40f</span></p></div><div class="card" id="ordersCard" hidden><h3 style="margin-top:0">My deposit orders</h3><div id="orders"></div></div></main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SID=Math.random().toString(36).slice(2);
+const BUILD='v40f';
+const DEF={q:'',dex:[],chain:[],src:[],minLiq:'',maxLiq:'',minVol:'',maxVol:'',minTurn:'',maxTurn:'',minChg:'',maxChg:'',minTx:'',maxTx:'',minAge:'',maxAge:'',sort:'tvl',order:'desc',page:0,size:25};
+let S={...DEF},rows=[],timers={},gen=0;
+function ev(e,d){fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:SID,build:BUILD,page:location.pathname,event:e,detail:d||''})}).catch(()=>{});}
+window.__errs=[];
+window.addEventListener('error',e=>{try{window.__errs.push(String(e.message).slice(0,200));ev('js_error',{msg:String(e.message).slice(0,200)});}catch(_){}});
+function fmtN(n){if(n==null||n==='')return '—';n=+n;if(!isFinite(n))return '—';if(n>=1e9)return (n/1e9).toFixed(2)+'B';if(n>=1e6)return (n/1e6).toFixed(2)+'M';if(n>=1e3)return (n/1e3).toFixed(1)+'K';return String(Math.round(n));}
+function fmtP(n){if(n==null||n==='')return '—';n=+n;if(!isFinite(n))return '—';return n.toFixed(2)+'%';}
+function fmtX(n){if(n==null||n==='')return '—';n=+n;if(!isFinite(n))return '—';return (n>=10?n.toFixed(0):n.toFixed(2))+'x';}
+function fmtAge(d){if(d==null||d==='')return '—';d=+d;if(!isFinite(d))return '—';if(d>=730)return (d/365).toFixed(1)+'y';if(d>=60)return (d/30).toFixed(1)+'mo';if(d>=1)return Math.round(d)+'d';return '<1d';}
+function txns(p){return (p.buys||0)+(p.sells||0);}
+function params(){const u=new URLSearchParams();if(S.q!=='')u.set('q',S.q);for(const v of S.dex)u.append('dex',v);for(const v of S.chain)u.append('chain',v);for(const v of S.src)u.append('src',v);for(const k of ['minLiq','maxLiq','minVol','maxVol','minTurn','maxTurn','minChg','maxChg','minTx','maxTx','minAge','maxAge'])if(S[k]!=='')u.set(k,S[k]);u.set('sort',S.sort);u.set('order',S.order);u.set('page',S.page);u.set('size',S.size);return u;}
+function pushURL(){history.replaceState(null,'','#'+params().toString());}
+function pullURL(){if(!location.hash)return;const u=new URLSearchParams(location.hash.slice(1));for(const k of Object.keys(DEF)){if(k==='dex'||k==='chain'||k==='src')continue;if(u.has(k))S[k]=u.get(k);}S.dex=u.getAll('dex');S.chain=u.getAll('chain');S.src=u.getAll('src');S.page=+S.page||0;S.size=+S.size||25;}
+function arrows(){for(const k of ['symbol','dex','src','chain','tvl','vol','turn','chg','txns','created']){const el=$('a-'+k);if(el)el.textContent=(S.sort===k?(S.order==='desc'?'▼':'▲'):'');}}
+function syncInputs(){$('f-q').value=S.q;$('f-minLiq').value=S.minLiq;$('f-maxLiq').value=S.maxLiq;$('f-minVol').value=S.minVol;$('f-maxVol').value=S.maxVol;$('f-minTurn').value=S.minTurn;$('f-maxTurn').value=S.maxTurn;$('f-minChg').value=S.minChg;$('f-maxChg').value=S.maxChg;$('f-minTx').value=S.minTx;$('f-maxTx').value=S.maxTx;$('f-minAge').value=S.minAge;$('f-maxAge').value=S.maxAge;$('size').value=String(S.size);$('jump').value='';msLabel();arrows();}
+function rowHTML(p){return `<tr class=trow data-id="${p.pool}"><td><b>${esc(p.symbol)}</b></td><td>${esc(p.dex)}</td><td class=mut>${esc(p.src||'')}</td><td>${esc(p.chain)}</td><td class=num>$${fmtN(p.tvl)}</td><td class=num>$${fmtN(p.vol)}</td><td class=num>${fmtX(p.turn)}</td><td class=num>${fmtP(p.chg)}</td><td class=num>${fmtN(txns(p))}</td><td class=mut>${fmtAge(p.ageDays)}</td><td><button class=act data-dep="${p.pool}">Deposit</button></td></tr>`;}
+function nActive(){let n=S.dex.length+S.chain.length;for(const k of ['minLiq','maxLiq','minVol','maxVol','minTurn','maxTurn','minChg','maxChg','minTx','maxTx','minAge','maxAge'])if(S[k]!=='')n++;return n;}
+async function refreshMS(){try{const m=await (await fetch('/api/pool-meta')).json();if(!m.ok)return;
+ for(const [key,items] of [['dex',m.dexes||[]],['chain',m.chains||[]]]){
+  const before=(MSITEMS[key]||[]).join('|');MSITEMS[key]=items;
+  if(before!==items.join('|')){const q=document.getElementById('ms-'+key+'-q');DRAWS[key](q?q.value.toLowerCase():'');}}}catch(e){}}
+async function render(){pushURL();const g=++gen;const t0=performance.now();
+ const r=await (await fetch('/api/all-pools?'+params())).json();
+ if(g!==gen)return;
+ if(!r.ok){$('tb').innerHTML=`<tr><td colspan=11 class=mut>pool cache empty — run bin/collect.sh on the server, then refresh.</td></tr>`;return;}
+ rows=r.rows;S.page=r.page;
+ $('count').textContent=r.total.toLocaleString()+' pools'+(r.live?' (live)':'');
+ const ageH=r.fetched_at?Math.max(0,Math.round((Date.now()/1000-r.fetched_at)/3600)):null;
+ $('tag').innerHTML=`${r.total.toLocaleString()} pools${r.live?' · LIVE results':''} · data: <b><a href="https://www.geckoterminal.com" target=_blank rel=noopener>GeckoTerminal DEX API</a></b> (reads chain events) · snapshot ${ageH==null?'?':ageH+'h old'} · every search goes live`;
+ $('showing').textContent=r.total?`showing ${r.lo.toLocaleString()}–${r.hi.toLocaleString()} of ${r.total.toLocaleString()}`:'no matches';
+ const ms=Math.round(performance.now()-t0);if(ms>1500)ev('slow_render',{ms,total:r.total,sort:S.sort});
+ if(!r.total)ev('empty',{q:S.q});
+ const na=nActive();
+ $('tb').innerHTML=r.rows.map(rowHTML).join('')||`<tr><td colspan=11 class=mut>${r.live?`No live pools for &quot;${esc(S.q)}&quot;`:`No pools match`}${na?` with ${na} filter${na>1?'s':''} on`:''}. <button class=ghost id=fclear>Clear filters${S.q?', keep search':''}</button></td></tr>`;
+ const fc=$('fclear');if(fc)fc.onclick=()=>{for(const k of Object.keys(DEF)){if(k!=='q'&&k!=='sort'&&k!=='order'&&k!=='size')S[k]=Array.isArray(DEF[k])?[]:DEF[k];}S.page=0;syncInputs();render();};
+ $('first').disabled=$('prev').disabled=r.page===0;
+ $('next').disabled=$('last').disabled=r.page>=r.pages-1;
+ const P0=r.page,pages=r.pages,lo=Math.max(0,Math.min(P0-3,pages-7)),hi=Math.min(pages,lo+7);
+ let h='';for(let i=lo;i<hi;i++)h+=`<button class="ghost pg${i===P0?' on':''}" data-pg="${i}">${i+1}</button>`;
+ $('nums').innerHTML=h;if(r.live)refreshMS();}
+function closePanel(){document.querySelectorAll('.xrow').forEach(n=>n.remove());}
+function panelHTML(p){const pa=String(p.pool||'').split(':'),pnet=pa[0],paddr=pa.slice(1).join(':');const EX={eth:'https://etherscan.io/address/',solana:'https://solscan.io/account/',base:'https://basescan.org/address/',bsc:'https://bscscan.com/address/',arbitrum:'https://arbiscan.io/address/',polygon_pos:'https://polygonscan.com/address/',optimism:'https://optimistic.etherscan.io/address/'};return `<tr class=xrow><td colspan=11><div class=detail>
+ <h3 style="margin:0 0 4px">Deposit into <b>${esc(p.symbol)}</b></h3>
+ <div class=mut>${esc(p.dex)} · ${esc(p.chain)} · liq $${fmtN(p.tvl)} · vol $${fmtN(p.vol)} · turnover ${fmtX(p.turn)} · age ${fmtAge(p.ageDays)}</div>
+ <div class=mut>contract <span style="font-family:monospace">${esc(paddr)}</span>${EX[pnet]?` · <a href="${EX[pnet]}${paddr}" target=_blank rel=noopener>verify on explorer ↗</a>`:''} · via api.geckoterminal.com</div>
+ <div id=tokens>${tokenHTML(p)}</div>
+ <div id=dxlive class=mut style="margin-top:8px">⛓ refreshing live…</div>
+ <h4>1 · Amount — see what happens</h4>
+ <div class=row><input id=za type=number value=1000 min=1 style="width:130px"><button class=ghost id=zgo>See what happens</button></div><div id=zout style="margin-top:8px"></div>
+ <h4>2 · Save it as your order</h4>
+ <div class=row><button class=act id=zsave>Save deposit order</button><span class=mut id=zmsg></span></div>
+ <h4>3 · Finish where the pool lives</h4>
+ <div class=row><a id=ztrade href="${esc(p.url||'#')}" target=_blank rel=noopener><button class=act>Open pool page ↗</button></a></div>
+ <p class=mut>We prepare everything here and take 0% fee. Money moves only when you confirm at the venue — nothing moves on this site.</p>
+ <div class=row><button class=ghost id=zx>Close</button></div>
+ </div></td></tr>`;}
+async function loadLive(p){const dx=$('dxlive');if(!dx)return;
+ if(String(p.pool||'').startsWith('raydium:')){dx.innerHTML=`⛓ source: <b>Raydium API</b> directly${p.apr!=null?` · DEX-reported APR <b class=free>${(+p.apr).toFixed(1)}%</b>`:''} · turnover ${fmtX(p.turn)}`;return;}
+ try{const r=await (await fetch('/api/pool-refresh?pool='+encodeURIComponent(p.pool))).json();
+ if(!dx.isConnected||!r.ok){if(!r.ok)ev('dex_miss',{id:p.pool});return;}
+ const i=rows.findIndex(x=>x.pool===p.pool);if(i>=0){rows[i]={...rows[i],...r};p=rows[i];}
+ const tk=$('tokens');if(tk&&dx.isConnected)tk.innerHTML=tokenHTML(p);
+ const zt=$('ztrade');if(zt&&dx.isConnected)zt.href=setTrade(p);
+ dx.innerHTML=`⛓ <b class=free>LIVE</b> · price $${r.price} · liq $${fmtN(r.tvl)} · vol $${fmtN(r.vol)} · turnover ${fmtX(r.turn)} · buys/sells ${r.buys??'—'}/${r.sells??'—'}`;}catch(e){ev('dex_fail',{id:p.pool});if(dx.isConnected)dx.textContent='Live refresh failed — cached numbers above still stand.';}}
+function verdict(p){const t=+p.turn,chg=+p.chg,age=p.ageDays;const out=[];
+ if(t==null||!isFinite(t))return 'No turnover data — earnings unknowable here.';
+ if(age!=null&&age<14)out.push(`New pool (${fmtAge(age)} old): high farm risk — check the tokens first.`);
+ else if(age!=null&&age>90)out.push(`Established pool (${fmtAge(age)}).`);
+ if(t>=1)out.push(`Hot: turns ${fmtX(t)} daily — real fee flow.`);
+ else if(t>=0.2)out.push(`Steady: ${fmtX(t)} daily turnover.`);
+ else out.push(`Quiet: ${fmtX(t)} daily turnover — thin fees.`);
+ if(isFinite(chg)&&Math.abs(chg)>10)out.push(`±${chg.toFixed(1)}% in 24h — expect impermanent-loss swings.`);
+ return out.join(' ');}
+async function doQuote(p){const amt=+$('za').value||0;
+ const r=await (await fetch('/api/zap-quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:amt,pool_id:p.pool,turn:p.turn,symbol:p.symbol,tierFee:p.fee})})).json();
+ if(!$('zout'))return;
+ const share=(p.tvl&&amt>0)?` · pool share ≈ ${((amt/p.tvl)*100).toFixed(3)}%`:'';
+ const big=(p.tvl&&amt/p.tvl>0.01)?` <b>Split your entry — you'd move this pool.</b>`:'';
+ $('zout').innerHTML=`<div>Put in <b>$${amt}</b> → swap cost $${r.swap_cost_est}${r.yield_day_est!=null?` · est. fees <b>≈ $${r.yield_day_est}/day</b> (turnover × ${r.tier_pct}% tier)`:''} · our fee <b class=free>$0</b>${share}${big}</div><div>${esc(verdict(p))}</div><div class=mut>Computed from this pool's live numbers, not a promise. Save it (step 2), then finish at the venue (step 3).</div>`;ev('quote',{id:p.pool});}
+async function saveOrder(p){const amt=+$('za').value||0;
+ try{const r=await (await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pool_id:p.pool,symbol:p.symbol,chain:p.chain,project:p.dex,amount:amt})})).json();
+ if(!$('zmsg'))return;
+ $('zmsg').textContent=r.ok?('saved ✓ order '+r.id):'save failed';if(r.ok){ev('order',{id:r.id});loadOrders();}}catch(e){if($('zmsg'))$('zmsg').textContent='save failed';}}
+async function loadOrders(){let list=[];try{list=await (await fetch('/api/orders')).json();}catch(e){}
+ const open=list.filter(o=>o.status!=='done');
+ $('ordersCard').hidden=!open.length;
+ $('orders').innerHTML=open.map(o=>`<div class=pill><b>${esc(o.symbol||o.pool_id)}</b> · $${esc(o.amount)} · ${esc(o.chain||'')} · <span class=mut>${esc(o.id)}</span> <button class=ghost data-done="${o.id}">mark done</button></div>`).join('');}
+async function markDone(id){await fetch('/api/orders/done',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{});ev('order_done',{id});loadOrders();}
+function uniLink(p){const m=/(\d+(?:\.\d+)?)\s*%/.exec(p.symbol||'');if(!m)return null;
+ const sl={eth:'mainnet',arbitrum:'arbitrum',optimism:'optimism',polygon_pos:'polygon',base:'base'}[p.chain];if(!sl)return null;
+ if(!/^0x/i.test(p.baseAddr||'')||!/^0x/i.test(p.quoteAddr||''))return null;
+ return `https://app.uniswap.org/add/${p.baseAddr}/${p.quoteAddr}/${Math.round(parseFloat(m[1])/100*1e6)}?chain=${sl}`;}
+function setTrade(p){return uniLink(p)||p.url||'#';}
+function tokenHTML(p){const EX={eth:'https://etherscan.io/address/',solana:'https://solscan.io/account/',base:'https://basescan.org/address/',bsc:'https://bscscan.com/address/',arbitrum:'https://arbiscan.io/address/',polygon_pos:'https://polygonscan.com/address/',optimism:'https://optimistic.etherscan.io/address/'};
+ const one=(s,a)=>{if(!a)return `<div class=mut>${esc(s||'token')}: address loads on refresh…</div>`;
+  const ex=EX[p.chain]?` <a href="${EX[p.chain]}${a}" target=_blank rel=noopener><button class=ghost>explorer ↗</button></a>`:'';
+  return `<div class=row style="gap:6px"><b>${esc(s||'?')}</b><span style="font-family:monospace">${esc(a.slice(0,6)+'…'+a.slice(-4))}</span><button class=ghost data-copy="${esc(a)}">copy</button>${ex}</div>`;};
+ return `<h4>Tokens — verify before you trust</h4>`+one(p.baseSym,p.baseAddr)+one(p.quoteSym,p.quoteAddr);}
+function openPanel(id){const p=rows.find(x=>x.pool===id);if(!p)return;
+ closePanel();
+ const tr=document.querySelector('tr.trow[data-id="'+id+'"]');if(!tr)return;
+ tr.insertAdjacentHTML('afterend',panelHTML(p));ev('deposit_open',{id});
+ $('ztrade').href=setTrade(p);
+ $('zgo').onclick=()=>doQuote(p);$('zsave').onclick=()=>saveOrder(p);$('zx').onclick=()=>closePanel();loadLive(p);
+ const za=$('za');if(za){za.focus();try{za.scrollIntoView({block:'nearest'});}catch(e){}}}
+function closeMS(){document.querySelectorAll('.msdrop').forEach(d=>d.hidden=true);}
+function msLabel(){const nm=a=>a.length?(a.length<4?a.join(', '):a.length+' picked'):'all';$('ms-dex-b').textContent='DEX: '+nm(S.dex)+' ▾';$('ms-chain-b').textContent='Chains: '+nm(S.chain)+' ▾';$('ms-src-b').textContent='Src: '+nm(S.src)+' ▾';
+ document.querySelectorAll('input[data-ms="dex"]').forEach(c=>c.checked=S.dex.includes(c.value));
+ document.querySelectorAll('input[data-ms="chain"]').forEach(c=>c.checked=S.chain.includes(c.value));
+ document.querySelectorAll('input[data-ms="src"]').forEach(c=>c.checked=S.src.includes(c.value));}
+function buildMS(key,bid,did,qid,oid){const o=$(oid);
+ const draw=(f='')=>{const picked=MSITEMS[key].filter(i=>S[key].includes(i));const rest=MSITEMS[key].filter(i=>!S[key].includes(i)&&i.toLowerCase().includes(f));const vis=[...picked,...rest];o.innerHTML=vis.map(i=>`<label><input type=checkbox data-ms="${key}" value="${esc(i)}"${S[key].includes(i)?'checked':''}><span>${esc(i)}</span></label>`).join('')||'<div class=mut>no matches</div>';const nn=$(oid+'-n');if(nn)nn.textContent=vis.length+' / '+MSITEMS[key].length;};
+ draw();$(qid).oninput=()=>draw($(qid).value.toLowerCase());
+ $(bid).onclick=e=>{e.stopPropagation();const d=$(did),was=d.hidden;closeMS();if(was){const r2=$(bid).getBoundingClientRect();d.style.top=Math.min(innerHeight-270,r2.bottom+4)+'px';d.style.left=Math.max(8,Math.min(innerWidth-308,r2.left))+'px';d.hidden=false;}};
+ o.onchange=()=>{syncBoxes(key,o,qid);};
+ DRAWS[key]=draw;
+ $(did).querySelector('[data-mall]').onclick=()=>{o.querySelectorAll('input:not(:checked)').forEach(c=>c.checked=true);syncBoxes(key,o,qid);};
+ $(did).querySelector('[data-mnone]').onclick=()=>{o.querySelectorAll('input:checked').forEach(c=>c.checked=false);syncBoxes(key,o,qid);};
+ if(!window.__msG){window.__msG=true;document.addEventListener('click',e=>{if(!e.target.closest('.ms'))closeMS();});document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('.ms'))window.__msT=Date.now();},true);document.addEventListener('focusin',e=>{if(e.target.closest&&e.target.closest('.ms'))window.__msT=Date.now();});document.addEventListener('scroll',e=>{const t=e.target;if(t&&t.closest&&t.closest('.msdrop'))return;if(Date.now()-(window.__msT||0)<1500)return;closeMS();},true);}}
+function syncBoxes(key,o,qid){S[key]=[...o.querySelectorAll('input:checked')].map(c=>c.value);S.page=0;msLabel();DRAWS[key]($(qid).value.toLowerCase());render();}
+const DRAWS={};
+let MSITEMS={dex:[],chain:[],src:[]};
+function set(k,v){S[k]=v;S.page=0;syncInputs();render();}
+function deb(k,f){clearTimeout(timers[k]);timers[k]=setTimeout(f,250);}
+function checkBuild(){fetch('/api/health').then(r=>r.json()).then(h=>{const b=h.build||'';if(b&&b!==BUILD){let s=document.getElementById('staleBar');if(!s){s=document.createElement('div');s.id='staleBar';s.style.cssText='background:#3a2a10;color:#fbbf24;padding:10px 20px;text-align:center;font-size:14px';document.body.prepend(s);}s.innerHTML='New version '+esc(b)+' is live — this tab runs '+BUILD+'. <a href="#" id="rl">Tap here to reload</a>';const rl=document.getElementById('rl');if(rl)rl.onclick=e=>{e.preventDefault();location.reload();};}}).catch(()=>{});}
+async function init(){pullURL();
+ try{const m=await (await fetch('/api/pool-meta')).json();
+ if(m.ok){MSITEMS={dex:m.dexes||[],chain:m.chains||[],src:m.srcs||[]};buildMS('dex','ms-dex-b','ms-dex-d','ms-dex-q','ms-dex-o');buildMS('chain','ms-chain-b','ms-chain-d','ms-chain-q','ms-chain-o');buildMS('src','ms-src-b','ms-src-d','ms-src-q','ms-src-o');}}catch(e){}
+ syncInputs();render();ev('view');loadOrders();checkBuild();setInterval(checkBuild,60000);
+ document.querySelectorAll('th.s').forEach(h=>h.onclick=()=>{const k=h.dataset.k;if(S.sort===k)S.order=S.order==='desc'?'asc':'desc';else{S.sort=k;S.order='desc';}S.page=0;syncInputs();render();});
+ $('f-q').oninput=e=>{const v=e.target.value;deb('q',()=>set('q',v));};
+ for(const [id,k] of [['f-minLiq','minLiq'],['f-maxLiq','maxLiq'],['f-minVol','minVol'],['f-maxVol','maxVol'],['f-minTurn','minTurn'],['f-maxTurn','maxTurn'],['f-minChg','minChg'],['f-maxChg','maxChg'],['f-minTx','minTx'],['f-maxTx','maxTx'],['f-minAge','minAge'],['f-maxAge','maxAge']])$(id).oninput=e=>{const v=e.target.value;deb(k,()=>set(k,v));};
+ $('first').onclick=()=>{S.page=0;render();};
+ $('prev').onclick=()=>{S.page=Math.max(0,S.page-1);render();};
+ $('next').onclick=()=>{S.page++;render();};
+ $('last').onclick=()=>{S.page=1e9;render();};
+ $('jump').onchange=()=>{const v=+$('jump').value;if(v>=1){S.page=v-1;render();}};
+ $('nums').onclick=e=>{const p=e.target.dataset.pg;if(p!==undefined){S.page=+p;render();}};
+ $('csv').onclick=()=>{location.href='/api/all-pools.csv?'+params().toString();ev('csv');};
+ $('orders').onclick=e=>{const id=e.target.dataset&&e.target.dataset.done;if(id)markDone(id);};
+ $('tb').onclick=e=>{const t=e.target,d=t.dataset||{};if(d.copy){if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(d.copy).then(()=>{t.textContent='copied';}).catch(()=>prompt('Copy address:',d.copy));else prompt('Copy address:',d.copy);return;}if(d.dep)openPanel(d.dep);};}
+
+init();
+</script></body></html>
