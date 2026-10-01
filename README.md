@@ -1,6 +1,6 @@
 # LP Pools — every live DEX pool in one table
 
-Single-page directory of live liquidity pools: cached top pools per network for browsing, every text search hits the DEX API live. One API total ([GeckoTerminal](https://www.geckoterminal.com), free, no key) plus [Raydium's own API](https://api-v3.raydium.io) as a first-party source. Each row's **Deposit** button runs a 3-step flow (amount → save order → open pool page).
+Single-page directory of live liquidity pools (2000+, 15 chains): cached top pools per network for browsing, every text search hits the DEX API live. One API total ([GeckoTerminal](https://www.geckoterminal.com), free, no key) plus [Raydium's own API](https://api-v3.raydium.io) as a first-party source. Each row's **Deposit** button runs a 3-step flow (amount → save order → open pool page).
 
 ## Run
 

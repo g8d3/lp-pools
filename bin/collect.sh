@@ -68,8 +68,9 @@ def rslim(p):
             "baseAddr": ma.get("address", ""), "quoteAddr": mb.get("address", ""),
             "url": "https://raydium.io/liquidity-pools/"}
 
+RPAGES = int(cfg.get("raydium_pages", 10))
 out = []
-for pg in (1, 2):
+for pg in range(1, RPAGES + 1):
     try:
         req = urllib.request.Request(
             f"https://api-v3.raydium.io/pools/info/list?poolType=all&poolSortField=default&sortType=desc&pageSize=100&page={pg}",
@@ -77,6 +78,8 @@ for pg in (1, 2):
         rows = json.load(urllib.request.urlopen(req, timeout=30))["data"]["data"]
         out.extend(rslim(p) for p in rows)
         print(f"OK   raydium      page {pg}: {len(rows)} pools")
+        if len(rows) < 100:
+            break
     except Exception as e:
         print(f"ERR  raydium      page {pg}: {str(e)[:100]}")
     time.sleep(5)

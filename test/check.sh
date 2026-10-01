@@ -17,4 +17,5 @@ curl -sf -X POST $B/api/zap-quote -H 'Content-Type: application/json' -d '{"amou
 OID=$(curl -sf -X POST $B/api/orders -H 'Content-Type: application/json' -d '{"pool_id":"t1","symbol":"TST","chain":"eth","amount":100}' | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
 curl -sf $B/api/orders | grep -q "$OID" && echo "orders OK"
 curl -sf -X POST $B/api/orders/done -H 'Content-Type: application/json' -d "{\"id\": \"$OID\"}" | grep -q '"ok": true' && echo "order done OK"
+curl -sf "$B/api/sources" | python3 -c "import json,sys;d=json.load(sys.stdin);assert len(d['sources'])>=14 and all('dex' in s and 'cex' in s for s in d['sources']);print('sources OK',len(d['sources']),d['rows_per_src'])"
 curl -sf $B/ | grep -q "v40" && echo "page OK"

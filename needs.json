@@ -6,7 +6,7 @@
  "public_url": "http://100.102.52.59:8484",
  "site_name": "LP Pools",
  "pools_cache_path": "data/dex_cache.json",
- "build": "v40f",
+ "build": "v40g",
  "gecko_api": "https://api.geckoterminal.com/api/v2",
  "gecko_networks": [
   "eth",
@@ -23,5 +23,6 @@
   "apechain"
  ],
  "gecko_pages": 5,
- "orders_path": "data/orders.jsonl"
+ "orders_path": "data/orders.jsonl",
+ "raydium_pages": 10
 }

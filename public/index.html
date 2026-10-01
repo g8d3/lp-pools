@@ -4,6 +4,7 @@
 <header><h1>LP Pools</h1><p id="tag">loading…</p></header>
 <main><div class="card"><div class="row">
 <button class=ghost id="csv">⇩ CSV</button>
+<button class=ghost id="srcBtn">Sources</button>
 <button class=ghost id="reset">reset all</button>
 <span class="mut" id="count"></span></div>
 <div style="overflow-x:auto;margin-top:8px"><table><thead><tr>
@@ -22,12 +23,12 @@
 <td></td>
 </tr></thead><tbody id="tb"></tbody></table></div>
 <div class="row" style="margin-top:10px"><button class=ghost id="first">|←</button><button class=ghost id="prev">←</button><span id="nums" class="row" style="gap:4px"></span><button class=ghost id="next">→</button><button class=ghost id="last">→|</button><input id="jump" type=number min=1 style="width:80px" placeholder="page"><select id="size"><option>10</option><option selected>25</option><option>50</option><option>100</option></select><span class=mut id="showing"></span></div>
-<p class=mut>Every search hits the DEX API live; empty search browses the cached top pools. Turnover = vol/liquidity per day — the LP earning signal. Source: GeckoTerminal (free, no key), refreshed by <span style="font-family:monospace">bin/collect.sh</span>. <span style="font-family:monospace" id="build">v40f</span></p></div><div class="card" id="ordersCard" hidden><h3 style="margin-top:0">My deposit orders</h3><div id="orders"></div></div></main>
+<p class=mut>Every search hits the DEX API live; empty search browses the cached top pools. Turnover = vol/liquidity per day — the LP earning signal. Source: GeckoTerminal (free, no key), refreshed by <span style="font-family:monospace">bin/collect.sh</span>. <span style="font-family:monospace" id="build">v40g</span></p></div><div class="card" id="srcCard" hidden><h3 style="margin-top:0">Data sources — proven capability, not ranking</h3><div id="srcRows"></div></div><div class="card" id="ordersCard" hidden><h3 style="margin-top:0">My deposit orders</h3><div id="orders"></div></div></main>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const SID=Math.random().toString(36).slice(2);
-const BUILD='v40f';
+const BUILD='v40g';
 const DEF={q:'',dex:[],chain:[],src:[],minLiq:'',maxLiq:'',minVol:'',maxVol:'',minTurn:'',maxTurn:'',minChg:'',maxChg:'',minTx:'',maxTx:'',minAge:'',maxAge:'',sort:'tvl',order:'desc',page:0,size:25};
 let S={...DEF},rows=[],timers={},gen=0;
 function ev(e,d){fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:SID,build:BUILD,page:location.pathname,event:e,detail:d||''})}).catch(()=>{});}
@@ -54,7 +55,8 @@ async function render(){pushURL();const g=++gen;const t0=performance.now();
  if(g!==gen)return;
  if(!r.ok){$('tb').innerHTML=`<tr><td colspan=11 class=mut>pool cache empty — run bin/collect.sh on the server, then refresh.</td></tr>`;return;}
  rows=r.rows;S.page=r.page;
- $('count').textContent=r.total.toLocaleString()+' pools'+(r.live?' (live)':'');
+ const fl=[];if(S.src.length)fl.push('src: '+S.src.join(','));if(S.dex.length)fl.push('dex:'+S.dex.length);if(S.chain.length)fl.push('chain:'+S.chain.length);let nr=0;for(const k of ['minLiq','maxLiq','minVol','maxVol','minTurn','maxTurn','minChg','maxChg','minTx','maxTx','minAge','maxAge'])if(S[k]!=='')nr++;if(nr)fl.push(nr+' ranges');
+ $('count').textContent=r.total.toLocaleString()+' pools'+(r.live?' (live)':'')+(fl.length?' · ['+fl.join(' + ')+']':'');
  const ageH=r.fetched_at?Math.max(0,Math.round((Date.now()/1000-r.fetched_at)/3600)):null;
  $('tag').innerHTML=`${r.total.toLocaleString()} pools${r.live?' · LIVE results':''} · data: <b><a href="https://www.geckoterminal.com" target=_blank rel=noopener>GeckoTerminal DEX API</a></b> (reads chain events) · snapshot ${ageH==null?'?':ageH+'h old'} · every search goes live`;
  $('showing').textContent=r.total?`showing ${r.lo.toLocaleString()}–${r.hi.toLocaleString()} of ${r.total.toLocaleString()}`:'no matches';
@@ -150,6 +152,11 @@ function buildMS(key,bid,did,qid,oid){const o=$(oid);
 function syncBoxes(key,o,qid){S[key]=[...o.querySelectorAll('input:checked')].map(c=>c.value);S.page=0;msLabel();DRAWS[key]($(qid).value.toLowerCase());render();}
 const DRAWS={};
 let MSITEMS={dex:[],chain:[],src:[]};
+async function renderSources(){const card=$('srcCard');card.hidden=!card.hidden;if(card.hidden)return;
+ $('srcRows').innerHTML='<span class=mut>loading…</span>';
+ try{const r=await (await fetch('/api/sources')).json();
+ $('srcRows').innerHTML=r.sources.map(s=>{const n=(r.rows_per_src||{})[s.id]||0;
+ return `<div class=pill><b>${esc(s.name)}</b> · ${esc(s.kind)} · ${esc(s.status)}${n?` · <b>${n}</b> rows in table`:''}<br><span class=mut>DEX: ${esc(s.dex||'?')} · CEX: ${esc(s.cex||'?')} — ${esc(s.note||'')}</span> <a href="${esc(s.url||'#')}" target=_blank rel=noopener>↗</a></div>`;}).join('');}catch(e){$('srcRows').textContent='unreachable';}}
 function set(k,v){S[k]=v;S.page=0;syncInputs();render();}
 function deb(k,f){clearTimeout(timers[k]);timers[k]=setTimeout(f,250);}
 function checkBuild(){fetch('/api/health').then(r=>r.json()).then(h=>{const b=h.build||'';if(b&&b!==BUILD){let s=document.getElementById('staleBar');if(!s){s=document.createElement('div');s.id='staleBar';s.style.cssText='background:#3a2a10;color:#fbbf24;padding:10px 20px;text-align:center;font-size:14px';document.body.prepend(s);}s.innerHTML='New version '+esc(b)+' is live — this tab runs '+BUILD+'. <a href="#" id="rl">Tap here to reload</a>';const rl=document.getElementById('rl');if(rl)rl.onclick=e=>{e.preventDefault();location.reload();};}}).catch(()=>{});}
@@ -167,6 +174,7 @@ async function init(){pullURL();
  $('jump').onchange=()=>{const v=+$('jump').value;if(v>=1){S.page=v-1;render();}};
  $('nums').onclick=e=>{const p=e.target.dataset.pg;if(p!==undefined){S.page=+p;render();}};
  $('csv').onclick=()=>{location.href='/api/all-pools.csv?'+params().toString();ev('csv');};
+ $('srcBtn').onclick=()=>renderSources();
  $('orders').onclick=e=>{const id=e.target.dataset&&e.target.dataset.done;if(id)markDone(id);};
  $('tb').onclick=e=>{const t=e.target,d=t.dataset||{};if(d.copy){if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(d.copy).then(()=>{t.textContent='copied';}).catch(()=>prompt('Copy address:',d.copy));else prompt('Copy address:',d.copy);return;}if(d.dep)openPanel(d.dep);};}
 

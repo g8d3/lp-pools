@@ -155,6 +155,45 @@ def filtered(qs):
     if maxAge is not None: r = [p for p in r if p.get("ageDays") is not None and p["ageDays"] <= maxAge]
     return r, fetched, live
 
+ALIASES = {"WSOL": "SOL", "WETH": "ETH", "WBNB": "BNB", "WBTC": "BTC", "WNEAR": "NEAR", "WPOL": "POL", "WAVAX": "AVAX"}
+
+def assets_of(sym):
+    out = []
+    for t in re.split(r'[-/_·\s]+', (sym or '').upper()):
+        t = ALIASES.get(t, t)
+        if t and not re.fullmatch(r'[\d.%]+', t) and t not in out:
+            out.append(t)
+    return sorted(out)
+
+def fam(dex):
+    d = (dex or '').lower()
+    for k in ('raydium', 'orca', 'uniswap', 'aerodrome', 'pancake', 'curve', 'meteora', 'rhea', 'pumpswap', 'morpho', 'beefy', 'kamino'):
+        if k in d: return k
+    return d or '?'
+
+def diverg(rows, key):
+    vs = [r.get(key) for r in rows if isinstance(r.get(key), (int, float)) and r.get(key)]
+    if len(vs) < 2: return None
+    return round(abs(max(vs) - min(vs)) / ((max(vs) + min(vs)) / 2) * 100, 2)
+
+_VEN = {"t": 0, "d": []}
+
+def venues():
+    now = time.time()
+    if now - _VEN["t"] < 3600 and _VEN["d"]:
+        return _VEN["d"]
+    try:
+        req = urllib.request.Request("https://api.llama.fi/overview/dexs?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true&dataType=dailyVolume",
+                                     headers={"User-Agent": "Mozilla/5.0"})
+        d = json.load(urllib.request.urlopen(req, timeout=25))
+        rows = [{"name": p.get("name"), "vol24": p.get("total24h") or 0, "chains": p.get("chains") or []}
+                for p in (d.get("protocols") or [])]
+        rows.sort(key=lambda x: x["vol24"], reverse=True)
+        _VEN["t"] = now; _VEN["d"] = rows[:40]
+    except Exception:
+        pass
+    return _VEN["d"]
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
     def send_json(self, obj, code=200):
@@ -191,6 +230,16 @@ class H(BaseHTTPRequestHandler):
             return self.send_json({"ok": True, "total": len(pools), "fetched_at": ch.get("fetched_at", 0),
                 "chains": chains, "dexes": [n for n, _ in dexes], "projects": [],
                 "srcs": sorted(set([p.get("src", "?") for p in pools] + [p.get("src", "?") for _ts, rows in _LIVE.values() for p in rows]))})
+        if path == "/api/sources":
+            try: reg = json.load(open(os.path.join(ROOT, "data/sources.json")))
+            except Exception: reg = []
+            counts = collections.Counter()
+            try:
+                for p in cache().get("pools", []): counts[p.get("src", "?")] += 1
+            except Exception: pass
+            return self.send_json({"ok": True, "sources": reg, "rows_per_src": dict(counts)})
+        if path == "/api/venues":
+            return self.send_json({"ok": True, "venues": venues(), "source": "DeFiLlama DEX volumes"})
         if path == "/api/all-pools":
             try: r, fetched, live = filtered(qs)
             except LookupError as e:
